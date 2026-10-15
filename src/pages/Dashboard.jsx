@@ -1,18 +1,26 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
+  Warehouse,
+  TrendingUp,
+  DollarSign,
+  ClipboardList,
+  Plus,
+  ArrowRight,
+  Scale,
+  Calendar,
+  Layers,
+  ArrowUpRight,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Sparkles,
   Utensils,
-  Check,
   ChevronDown,
   ChevronUp,
-  ShieldAlert,
   BarChart3,
-  Scale,
-  Sparkles,
-  ArrowRight,
-  TrendingUp,
-  Layers,
-  Plus,
+  ShieldAlert,
+  Check,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -26,14 +34,20 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { usePigs, useTasks, useFinances, useSettings } from '../context/AppContext';
+import { usePigs, useTasks, useFinances } from '../context/AppContext';
 import {
   formatDate,
+  formatRelative,
+  formatCurrency,
+  formatWeight,
+  getProgressToMarket,
   calculateFeedForBatch,
   getEstimatedMarketValue,
-  getProgressToMarket,
 } from '../utils/helpers';
-import { PIG_STATUS } from '../utils/constants';
+import { PIG_STATUS, PIG_STATUS_LABELS, MARKET_STANDARDS } from '../utils/constants';
+import { StatCard } from '../components/StatCard';
+import { StatusBadge } from '../components/StatusBadge';
+import { EmptyState } from '../components/EmptyState';
 import { useToast } from '../components/Toast';
 
 const STATUS_COLORS = {
@@ -43,108 +57,78 @@ const STATUS_COLORS = {
   [PIG_STATUS.MARKET_READY]: '#10b981', // emerald
 };
 
-// Activity category icon helper matching the screenshot
-function getActivityIcon(category = '', type = '') {
-  const cat = (category || '').toLowerCase();
-  if (cat.includes('medicin') || cat.includes('vaccin')) return '💊';
-  if (cat.includes('utilit') || cat.includes('electri') || cat.includes('water')) return '💡';
-  if (cat.includes('feed') || cat.includes('darak') || cat.includes('pellet')) return '🌾';
-  if (cat.includes('sale') || cat.includes('sold') || type === 'income') return '📥';
-  if (cat.includes('pig') || cat.includes('purchase')) return '🐷';
-  return '📋';
+// Custom Tooltip for Area Chart
+function AreaChartTooltip({ active, payload, label }) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-900 text-white px-3 py-2 rounded-lg text-xs shadow-xl border border-slate-700">
+        <p className="font-semibold text-slate-300">{label}</p>
+        <p className="text-emerald-400 font-bold text-sm mt-0.5">
+          {payload[0].value} Pigs
+        </p>
+      </div>
+    );
+  }
+  return null;
 }
 
-function formatActivityDate(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-function formatAmount(val, isNegative) {
-  const abs = Math.abs(val || 0);
-  const formatted = abs.toLocaleString('en-PH', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return isNegative ? `₱ -${formatted}` : `₱ ${formatted}`;
+// Custom Tooltip for Donut Chart
+function PieChartTooltip({ active, payload }) {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    return (
+      <div className="bg-slate-900 text-white px-3 py-2 rounded-lg text-xs shadow-xl border border-slate-700">
+        <p className="font-semibold" style={{ color: data.payload.color }}>
+          {data.name}
+        </p>
+        <p className="text-white font-bold text-sm mt-0.5">
+          {data.value} Pigs ({data.payload.percentage}%)
+        </p>
+      </div>
+    );
+  }
+  return null;
 }
 
 export function Dashboard() {
   const navigate = useNavigate();
   const { pigs } = usePigs();
-  const { tasks } = useTasks();
-  const { finances, getTotalIncome, getTotalExpenses } = useFinances();
-  const { settings } = useSettings();
+  const { tasks, completeTask } = useTasks();
+  const { finances, getTotalIncome } = useFinances();
   const { toast } = useToast();
 
-  const [cycleIndex, setCycleIndex] = useState(0);
-  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showMobileCharts, setShowMobileCharts] = useState(false);
   const [morningFed, setMorningFed] = useState(false);
   const [afternoonFed, setAfternoonFed] = useState(false);
 
-  // Active (non-sold) pigs
+  // Non-sold pigs
   const activePigs = useMemo(
     () => pigs.filter((p) => p.status !== PIG_STATUS.SOLD),
     [pigs]
   );
 
-  // Financial metrics
-  const totalRevenue = useMemo(() => getTotalIncome(), [getTotalIncome]);
-  const totalExpenses = useMemo(() => getTotalExpenses(), [getTotalExpenses]);
-  const netProfit = totalRevenue - totalExpenses;
+  // Market ready count & projected value
+  const marketReadyPigs = useMemo(
+    () => pigs.filter((p) => p.status === PIG_STATUS.MARKET_READY),
+    [pigs]
+  );
 
-  // Estimated total herd value based on liveweight
-  const liveweightPrice = settings?.liveweightPriceKg || 180;
-  const estimatedHerdValue = useMemo(() => {
-    return activePigs.reduce((sum, p) => {
-      const weight = p.currentWeight || 10;
-      return sum + weight * liveweightPrice;
+  const marketReadyValue = useMemo(() => {
+    return marketReadyPigs.reduce((sum, p) => {
+      return sum + getEstimatedMarketValue(p.currentWeight);
     }, 0);
-  }, [activePigs, liveweightPrice]);
+  }, [marketReadyPigs]);
 
-  // Metrics to cycle through in the dark hero card
-  const heroMetrics = [
-    {
-      label: 'TOTAL NET/LOSS',
-      valueFormatted: formatAmount(netProfit, netProfit < 0),
-      isLoss: netProfit < 0,
-    },
-    {
-      label: 'TOTAL REVENUE',
-      valueFormatted: formatAmount(totalRevenue, false),
-      isLoss: false,
-    },
-    {
-      label: 'TOTAL EXPENSES',
-      valueFormatted: formatAmount(totalExpenses, true),
-      isLoss: true,
-    },
-    {
-      label: 'HERD MARKET VALUE',
-      valueFormatted: formatAmount(estimatedHerdValue, false),
-      isLoss: false,
-    },
-  ];
+  // Total Revenue (all income)
+  const totalRevenue = useMemo(() => getTotalIncome(), [getTotalIncome]);
 
-  const currentMetric = heroMetrics[cycleIndex % heroMetrics.length];
+  // Active Tasks (non-completed)
+  const activeTasksCount = useMemo(
+    () => tasks.filter((t) => t.status !== 'completed').length,
+    [tasks]
+  );
 
-  const handleCycleMetric = (e) => {
-    if (e) e.stopPropagation();
-    setCycleIndex((prev) => (prev + 1) % heroMetrics.length);
-  };
-
-  // Recent 4 activities matching the screenshot priority
-  const recentActivities = useMemo(() => {
-    return [...finances]
-      .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
-      .slice(0, 4);
-  }, [finances]);
-
-  // Urgent Tasks
+  // Urgent / Overdue Tasks
   const urgentTasks = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
     return tasks.filter(
@@ -154,15 +138,32 @@ export function Dashboard() {
     );
   }, [tasks]);
 
-  // Daily Feed Calculation for Herd (Philippine DA Standards)
+  // Daily Feed Totals for Herd
   const herdFeed = useMemo(() => {
     return calculateFeedForBatch(activePigs);
   }, [activePigs]);
 
-  const morningRationKg = Math.round(herdFeed.totalDailyKg * 0.5 * 10) / 10;
-  const afternoonRationKg = Math.round(herdFeed.totalDailyKg * 0.5 * 10) / 10;
+  // Morning Ration (50% average) and Afternoon Ration (50%)
+  const morningRationKg = Math.round((herdFeed.totalDailyKg * 0.5) * 10) / 10;
+  const afternoonRationKg = Math.round((herdFeed.totalDailyKg * 0.5) * 10) / 10;
 
-  // Herd status distribution
+  // 6-month Herd Growth Calculation
+  const herdGrowthData = useMemo(() => {
+    const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
+    const now = new Date();
+    return months.map((month, index) => {
+      const monthOffset = 5 - index;
+      const targetMonthDate = new Date(now.getFullYear(), now.getMonth() - monthOffset, 1);
+      const count = pigs.filter((p) => {
+        const pDate = new Date(p.dateOfBirth || p.createdAt || '2026-05-01');
+        return pDate <= targetMonthDate;
+      }).length;
+      const adjustedCount = Math.max(count, Math.round(activePigs.length * (0.4 + index * 0.12)));
+      return { month, count: adjustedCount };
+    });
+  }, [pigs, activePigs.length]);
+
+  // Pig Status Distribution (excluding sold)
   const statusDistribution = useMemo(() => {
     const counts = {
       [PIG_STATUS.WEANING]: 0,
@@ -170,327 +171,121 @@ export function Dashboard() {
       [PIG_STATUS.FINISHING]: 0,
       [PIG_STATUS.MARKET_READY]: 0,
     };
+
     activePigs.forEach((p) => {
-      if (counts[p.status] !== undefined) counts[p.status] += 1;
+      if (counts[p.status] !== undefined) {
+        counts[p.status] += 1;
+      }
     });
+
     const total = activePigs.length || 1;
+
     return [
-      { name: 'Weaning', value: counts[PIG_STATUS.WEANING], color: STATUS_COLORS[PIG_STATUS.WEANING], percentage: Math.round((counts[PIG_STATUS.WEANING] / total) * 100) },
-      { name: 'Growing', value: counts[PIG_STATUS.GROWING], color: STATUS_COLORS[PIG_STATUS.GROWING], percentage: Math.round((counts[PIG_STATUS.GROWING] / total) * 100) },
-      { name: 'Finishing', value: counts[PIG_STATUS.FINISHING], color: STATUS_COLORS[PIG_STATUS.FINISHING], percentage: Math.round((counts[PIG_STATUS.FINISHING] / total) * 100) },
-      { name: 'Market Ready', value: counts[PIG_STATUS.MARKET_READY], color: STATUS_COLORS[PIG_STATUS.MARKET_READY], percentage: Math.round((counts[PIG_STATUS.MARKET_READY] / total) * 100) },
+      {
+        name: 'Weaning',
+        statusKey: PIG_STATUS.WEANING,
+        value: counts[PIG_STATUS.WEANING],
+        color: STATUS_COLORS[PIG_STATUS.WEANING],
+        percentage: Math.round((counts[PIG_STATUS.WEANING] / total) * 100),
+      },
+      {
+        name: 'Growing',
+        statusKey: PIG_STATUS.GROWING,
+        value: counts[PIG_STATUS.GROWING],
+        color: STATUS_COLORS[PIG_STATUS.GROWING],
+        percentage: Math.round((counts[PIG_STATUS.GROWING] / total) * 100),
+      },
+      {
+        name: 'Finishing',
+        statusKey: PIG_STATUS.FINISHING,
+        value: counts[PIG_STATUS.FINISHING],
+        color: STATUS_COLORS[PIG_STATUS.FINISHING],
+        percentage: Math.round((counts[PIG_STATUS.FINISHING] / total) * 100),
+      },
+      {
+        name: 'Market Ready',
+        statusKey: PIG_STATUS.MARKET_READY,
+        value: counts[PIG_STATUS.MARKET_READY],
+        color: STATUS_COLORS[PIG_STATUS.MARKET_READY],
+        percentage: Math.round((counts[PIG_STATUS.MARKET_READY] / total) * 100),
+      },
     ].filter((item) => item.value > 0);
   }, [activePigs]);
 
-  // Herd growth mock trajectory
-  const herdGrowthData = useMemo(() => {
-    const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
-    return months.map((month, idx) => ({
-      month,
-      count: Math.max(3, Math.round(activePigs.length * (0.4 + idx * 0.12))),
-    }));
-  }, [activePigs.length]);
+  // Top 5 pigs closest to target market weight
+  const topProgressPigs = useMemo(() => {
+    return [...activePigs]
+      .sort((a, b) => {
+        const progA = getProgressToMarket(a.currentWeight, a.targetWeight);
+        const progB = getProgressToMarket(b.currentWeight, b.targetWeight);
+        return progB - progA;
+      })
+      .slice(0, 5);
+  }, [activePigs]);
+
+  // Next 5 upcoming tasks
+  const upcomingTasks = useMemo(() => {
+    return [...tasks]
+      .filter((t) => t.status !== 'completed')
+      .sort((a, b) => new Date(a.dueDate || 0) - new Date(b.dueDate || 0))
+      .slice(0, 5);
+  }, [tasks]);
+
+  // Quick Weigh trigger
+  const triggerQuickWeigh = (pigId = null) => {
+    window.dispatchEvent(
+      new CustomEvent('porkpro:open-weigh', { detail: { pigId } })
+    );
+  };
 
   return (
-    <div className="space-y-6 max-w-xl lg:max-w-4xl mx-auto pb-16 animate-fadeIn">
-      {/* 1. DARK HERO CARD (TOTAL NET/LOSS) — Exact 1:1 match with user screenshot */}
-      <section
-        onClick={handleCycleMetric}
-        className="bg-[#0b0c10] text-white rounded-3xl sm:rounded-[28px] p-5 sm:p-6 shadow-xl shadow-black/25 border border-zinc-900 cursor-pointer select-none active:scale-[0.99] transition-transform relative overflow-hidden"
-      >
-        {/* Top Row: Metric Title & Interactive TAP TO CYCLE */}
-        <div className="flex items-center justify-between text-zinc-400">
-          <span className="text-[11px] font-black tracking-widest uppercase">
-            {currentMetric.label}
-          </span>
-          <button
-            type="button"
-            onClick={handleCycleMetric}
-            className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 hover:text-white flex items-center gap-1 active:scale-95 transition-colors"
-          >
-            <span>TAP TO CYCLE</span>
-            <span className="text-xs">↻</span>
-          </button>
-        </div>
-
-        {/* Center Big Display Amount */}
-        <div className="my-3.5">
-          <p
-            className={`text-3xl sm:text-4xl font-black tracking-tight ${
-              currentMetric.isLoss ? 'text-[#ff4d6d]' : 'text-emerald-400'
-            }`}
-          >
-            {currentMetric.valueFormatted}
+    <div className="space-y-5 sm:space-y-7 animate-fadeIn max-w-7xl mx-auto pb-16">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">
+              Farm Dashboard
+            </h1>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              <Sparkles className="w-3 h-3 text-emerald-500" /> DA Standards
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+            Commercial Swine Operations &bull; Real-time Philippine Standard Records
           </p>
         </div>
 
-        {/* Subtle Horizontal Divider */}
-        <div className="border-t border-zinc-800/90 pt-3 flex items-center justify-between text-xs font-semibold">
-          {/* Active Herd */}
-          <div className="flex items-center gap-1.5 text-zinc-300">
-            <span className="text-sm">🐷</span>
-            <span>Active Herd:</span>
-            <span className="text-emerald-400 font-black">{activePigs.length}</span>
-          </div>
-
-          {/* Region */}
-          <div className="flex items-center gap-1.5 text-zinc-300">
-            <span className="text-sm">📍</span>
-            <span className="text-zinc-300">region:</span>
-            <span className="text-white font-bold capitalize">
-              {settings?.region || 'Cebu'}
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. QUICK ACTIONS — 5 Chunky Pastel Mint Circular Buttons matching screenshot */}
-      <section>
-        <h2 className="text-xs font-black tracking-wider text-slate-900 uppercase mb-3">
-          QUICK ACTIONS
-        </h2>
-
-        <div className="flex items-start justify-between gap-1.5 sm:gap-4 overflow-x-auto pb-1 no-scrollbar">
-          {/* PIGS */}
+        {/* Desktop Quick Header Buttons */}
+        <div className="hidden sm:flex items-center gap-2.5">
           <button
             type="button"
-            onClick={() => navigate('/pigs')}
-            className="flex flex-col items-center flex-1 min-w-[60px] group active:scale-95 transition-all"
+            onClick={() => triggerQuickWeigh()}
+            className="btn-secondary py-2 text-xs font-bold"
           >
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#e8f7f0] border border-[#c7eee0] flex items-center justify-center text-2xl sm:text-3xl shadow-xs group-hover:bg-[#d5f3e4] transition-colors">
-              🐷
-            </div>
-            <span className="text-[10px] sm:text-xs font-black tracking-wide text-slate-800 mt-2 uppercase text-center">
-              PIGS
-            </span>
+            <Scale className="w-4 h-4 text-emerald-600" />
+            <span>Quick Weigh</span>
           </button>
-
-          {/* LOG CASH */}
-          <button
-            type="button"
-            onClick={() => navigate('/finance')}
-            className="flex flex-col items-center flex-1 min-w-[60px] group active:scale-95 transition-all"
-          >
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#e8f7f0] border border-[#c7eee0] flex items-center justify-center text-2xl sm:text-3xl shadow-xs group-hover:bg-[#d5f3e4] transition-colors">
-              💸
-            </div>
-            <span className="text-[10px] sm:text-xs font-black tracking-wide text-slate-800 mt-2 uppercase text-center">
-              LOG CASH
-            </span>
-          </button>
-
-          {/* ADD TASK */}
-          <button
-            type="button"
-            onClick={() => navigate('/tasks')}
-            className="flex flex-col items-center flex-1 min-w-[60px] group active:scale-95 transition-all"
-          >
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#e8f7f0] border border-[#c7eee0] flex items-center justify-center text-2xl sm:text-3xl shadow-xs group-hover:bg-[#d5f3e4] transition-colors">
-              <div className="w-7 h-7 bg-white rounded-md border border-slate-300 flex flex-col items-center overflow-hidden shadow-2xs">
-                <div className="w-full bg-rose-500 text-white text-[6px] font-black leading-tight text-center py-0.5">
-                  JULY
-                </div>
-                <div className="text-[10px] font-black text-slate-900 leading-none mt-0.5">
-                  17
-                </div>
-              </div>
-            </div>
-            <span className="text-[10px] sm:text-xs font-black tracking-wide text-slate-800 mt-2 uppercase text-center">
-              ADD TASK
-            </span>
-          </button>
-
-          {/* FEED CALC */}
-          <button
-            type="button"
-            onClick={() => navigate('/feed')}
-            className="flex flex-col items-center flex-1 min-w-[60px] group active:scale-95 transition-all"
-          >
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#e8f7f0] border border-[#c7eee0] flex items-center justify-center text-2xl sm:text-3xl shadow-xs group-hover:bg-[#d5f3e4] transition-colors">
-              🌾
-            </div>
-            <span className="text-[10px] sm:text-xs font-black tracking-wide text-slate-800 mt-2 uppercase text-center">
-              FEED CALC
-            </span>
-          </button>
-
-          {/* SELL CALC */}
-          <button
-            type="button"
-            onClick={() => navigate('/profit')}
-            className="flex flex-col items-center flex-1 min-w-[60px] group active:scale-95 transition-all"
-          >
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#e8f7f0] border border-[#c7eee0] flex items-center justify-center text-2xl sm:text-3xl shadow-xs group-hover:bg-[#d5f3e4] transition-colors">
-              💰
-            </div>
-            <span className="text-[10px] sm:text-xs font-black tracking-wide text-slate-800 mt-2 uppercase text-center">
-              SELL CALC
-            </span>
-          </button>
-        </div>
-      </section>
-
-      {/* 3. RECENT ACTIVITY — Clean Rounded Cards with VIEW ALL */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-black tracking-wider text-slate-900 uppercase">
-            RECENT ACTIVITY
-          </h2>
-          <Link
-            to="/finance"
-            className="text-xs font-black text-emerald-500 hover:text-emerald-600 uppercase tracking-wide transition-colors"
-          >
-            VIEW ALL
+          <Link to="/batches" className="btn-secondary py-2 text-xs">
+            <Layers className="w-4 h-4 text-gray-500" />
+            <span>Batches</span>
+          </Link>
+          <Link to="/pigs/add" className="btn-primary py-2 text-xs">
+            <Plus className="w-4 h-4" />
+            <span>Add Pig</span>
           </Link>
         </div>
+      </div>
 
-        <div className="space-y-2.5">
-          {recentActivities.map((item) => {
-            const isIncome = item.type === 'income';
-            const icon = getActivityIcon(item.category, item.type);
-            const formattedDate = formatActivityDate(item.date);
-            const amountNum = Number(item.amount) || 0;
-            const formattedAmount = `${isIncome ? '+' : '-'}₱ ${amountNum.toLocaleString('en-PH', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}`;
-
-            return (
-              <div
-                key={item.id}
-                onClick={() => navigate('/finance')}
-                className="bg-white rounded-2xl p-3.5 sm:p-4 border border-slate-200/80 shadow-xs flex items-center justify-between hover:border-slate-300 active:scale-[0.99] transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div className="w-12 h-12 rounded-full bg-slate-50 border border-slate-100/90 flex items-center justify-center text-xl flex-shrink-0 shadow-2xs">
-                    {icon}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900 truncate">
-                      {item.category || item.description}
-                    </p>
-                    <p className="text-xs font-medium text-slate-400 mt-0.5">
-                      {formattedDate}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="text-right flex-shrink-0 pl-3">
-                  <p
-                    className={`text-sm sm:text-base font-black tracking-tight ${
-                      isIncome ? 'text-[#10b981]' : 'text-[#ff4d6d]'
-                    }`}
-                  >
-                    {formattedAmount}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* 4. PHILIPPINE DA FEEDING RATION TRACKER (Morning & Afternoon Rations) */}
-      <section className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <span className="text-base">🥣</span>
-            <div>
-              <h3 className="text-sm font-black text-slate-900">DA Daily Feeding Rations</h3>
-              <p className="text-[11px] text-slate-500">
-                Philippine Department of Agriculture Feeding Standard
-              </p>
-            </div>
-          </div>
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
-            {herdFeed.totalDailyKg} kg / day
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          {/* Morning Ration */}
-          <div
-            className={`p-3.5 rounded-2xl border transition-all ${
-              morningFed
-                ? 'bg-emerald-50/70 border-emerald-200'
-                : 'bg-slate-50 border-slate-200/80'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-black text-slate-800">☀️ Morning (50%)</span>
-              <span className="text-xs font-extrabold text-emerald-700">
-                {morningRationKg} kg
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-400 mb-2.5">Schedule: 6:00 AM - 7:30 AM</p>
-            <button
-              type="button"
-              onClick={() => {
-                setMorningFed((prev) => !prev);
-                toast({
-                  type: 'success',
-                  title: morningFed ? 'Ration Unchecked' : 'Morning Ration Completed',
-                  message: `${morningRationKg} kg feeding logged for herd.`,
-                });
-              }}
-              className={`w-full min-h-[44px] rounded-xl text-xs font-black flex items-center justify-center gap-1.5 active:scale-95 transition-all ${
-                morningFed
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              <Check className="w-4 h-4 stroke-[2.5]" />
-              <span>{morningFed ? 'Fed' : 'Checkoff'}</span>
-            </button>
-          </div>
-
-          {/* Afternoon Ration */}
-          <div
-            className={`p-3.5 rounded-2xl border transition-all ${
-              afternoonFed
-                ? 'bg-emerald-50/70 border-emerald-200'
-                : 'bg-slate-50 border-slate-200/80'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-black text-slate-800">🌤️ Afternoon (50%)</span>
-              <span className="text-xs font-extrabold text-emerald-700">
-                {afternoonRationKg} kg
-              </span>
-            </div>
-            <p className="text-[10px] text-slate-400 mb-2.5">Schedule: 3:30 PM - 5:00 PM</p>
-            <button
-              type="button"
-              onClick={() => {
-                setAfternoonFed((prev) => !prev);
-                toast({
-                  type: 'success',
-                  title: afternoonFed ? 'Ration Unchecked' : 'Afternoon Ration Completed',
-                  message: `${afternoonRationKg} kg feeding logged for herd.`,
-                });
-              }}
-              className={`w-full min-h-[44px] rounded-xl text-xs font-black flex items-center justify-center gap-1.5 active:scale-95 transition-all ${
-                afternoonFed
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              <Check className="w-4 h-4 stroke-[2.5]" />
-              <span>{afternoonFed ? 'Fed' : 'Checkoff'}</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. URGENT HEALTH TASKS (IF ANY) */}
+      {/* URGENT DA VACCINATION & HEALTH ALERT BANNER */}
       {urgentTasks.length > 0 && (
-        <section className="p-4 rounded-3xl bg-amber-500/10 border border-amber-300/80 flex items-center justify-between gap-3">
+        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-300/80 flex items-center justify-between gap-3 animate-slideIn">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-2xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
-              <ShieldAlert className="w-5 h-5" />
+            <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+              <ShieldAlert className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs sm:text-sm font-black text-amber-950 truncate">
+              <p className="text-xs sm:text-sm font-bold text-amber-950 truncate">
                 {urgentTasks.length} Urgent Health Task{urgentTasks.length > 1 ? 's' : ''}
               </p>
               <p className="text-[11px] text-amber-800 truncate">
@@ -500,77 +295,641 @@ export function Dashboard() {
           </div>
           <Link
             to="/tasks"
-            className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-xl text-xs font-extrabold transition-all shadow-xs flex-shrink-0"
+            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex-shrink-0"
           >
-            View
+            View Tasks
           </Link>
-        </section>
+        </div>
       )}
 
-      {/* 6. COLLAPSIBLE HERD ANALYTICS & CHARTS */}
-      <section className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs">
+      {/* FIELD QUICK ACTION BUTTONS (Clean, Bold, Focused) */}
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
         <button
           type="button"
-          onClick={() => setShowAnalytics((prev) => !prev)}
-          className="w-full flex items-center justify-between text-left active:scale-[0.99] transition-transform"
+          onClick={() => triggerQuickWeigh()}
+          className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all shadow-xs text-left group"
         >
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-emerald-600" />
-            <div>
-              <h3 className="text-sm font-black text-slate-900">Herd Growth & Stage Distribution</h3>
-              <p className="text-[11px] text-slate-500">Analytics across 10 active hogs</p>
-            </div>
+          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <Scale className="w-5 h-5 text-white" />
           </div>
-          <div className="flex items-center gap-1.5 text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-xl">
-            <span>{showAnalytics ? 'Hide' : 'Show'}</span>
-            {showAnalytics ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          <div>
+            <span className="text-sm font-extrabold block leading-tight">Quick Weigh</span>
+            <span className="text-[11px] text-emerald-100/90 font-medium block">Log scale</span>
           </div>
         </button>
 
-        {showAnalytics && (
-          <div className="mt-5 pt-4 border-t border-slate-100 space-y-6 animate-fadeIn">
-            {/* Status Breakdown Pills */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {statusDistribution.map((item) => (
-                <div
-                  key={item.name}
-                  className="p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center"
-                >
-                  <p className="text-xs font-black" style={{ color: item.color }}>
-                    {item.name}
-                  </p>
-                  <p className="text-lg font-black text-slate-900 mt-0.5">
-                    {item.value} <span className="text-[11px] font-normal text-slate-400">({item.percentage}%)</span>
-                  </p>
-                </div>
-              ))}
-            </div>
+        <Link
+          to="/feed"
+          className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-gray-200/90 hover:border-blue-400 hover:bg-blue-50/40 active:scale-95 transition-all shadow-xs text-left group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <Utensils className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-sm font-extrabold text-gray-900 block leading-tight">
+              Feed Guide
+            </span>
+            <span className="text-[11px] text-gray-500 font-medium block">Daily rations</span>
+          </div>
+        </Link>
 
-            {/* Growth Curve Chart */}
+        <Link
+          to="/pigs/add"
+          className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-gray-200/90 hover:border-emerald-400 hover:bg-emerald-50/40 active:scale-95 transition-all shadow-xs text-left group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <Plus className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-sm font-extrabold text-gray-900 block leading-tight">
+              Add Pig
+            </span>
+            <span className="text-[11px] text-gray-500 font-medium block">Single / Batch</span>
+          </div>
+        </Link>
+
+        <Link
+          to="/tasks"
+          className="flex items-center gap-3 p-3.5 rounded-2xl bg-white border border-gray-200/90 hover:border-purple-400 hover:bg-purple-50/40 active:scale-95 transition-all shadow-xs text-left group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+            <ClipboardList className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-sm font-extrabold text-gray-900 block leading-tight">
+              Tasks
+            </span>
+            <span className="text-[11px] text-gray-500 font-medium block">Schedule</span>
+          </div>
+        </Link>
+      </section>
+
+      {/* TODAY'S FEEDING TRACKER (Focused on Numbers & Clear Tabular Alignment) */}
+      <section className="bg-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg border border-slate-800 relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <Utensils className="w-4 h-4" />
+            </div>
             <div>
-              <p className="text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
-                6-Month Herd Population Trajectory
+              <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                Daily Feeding Schedule
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                Philippine DA Standard &bull; {activePigs.length} Active Swine
               </p>
-              <div className="h-44 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={herdGrowthData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="count" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#growthGradient)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
             </div>
           </div>
-        )}
+
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            <div className="text-right">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                Total Daily Feed
+              </p>
+              <p className="text-sm sm:text-base font-extrabold text-emerald-400 font-mono">
+                {herdFeed.totalDailyKg} kg{' '}
+                <span className="text-slate-400 text-xs font-normal">
+                  ({formatCurrency(herdFeed.totalDailyCost)})
+                </span>
+              </p>
+            </div>
+            <Link
+              to="/feed"
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 transition-colors"
+              title="View Feed Calculator"
+            >
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Morning & Afternoon Meal Cards with Clear Numbers */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Morning Meal (6:00 AM) */}
+          <div
+            className={`p-3.5 rounded-2xl border transition-all ${
+              morningFed
+                ? 'bg-emerald-950/40 border-emerald-500/50'
+                : 'bg-slate-800/80 border-slate-700/80'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                  <span>🌅</span>
+                  <span>Morning Ration</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-700 text-slate-300 font-mono">
+                    6:00 AM
+                  </span>
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-xl font-extrabold text-white font-mono">
+                  {morningRationKg} <span className="text-xs text-slate-400 font-normal">kg</span>
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMorningFed(!morningFed);
+                toast.success(
+                  morningFed ? 'Morning feed unmarked' : 'Morning ration marked as completed!'
+                );
+              }}
+              className={`w-full py-3 px-3 rounded-2xl text-xs font-extrabold min-h-[46px] flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                morningFed
+                  ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                  : 'bg-slate-700/90 hover:bg-slate-600 active:bg-slate-800 text-white shadow-xs'
+              }`}
+            >
+              {morningFed ? (
+                <>
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>Morning Completed</span>
+                </>
+              ) : (
+                <span>Mark Morning Fed (6:00 AM)</span>
+              )}
+            </button>
+          </div>
+
+          {/* Afternoon Meal (4:00 PM) */}
+          <div
+            className={`p-3.5 rounded-2xl border transition-all ${
+              afternoonFed
+                ? 'bg-emerald-950/40 border-emerald-500/50'
+                : 'bg-slate-800/80 border-slate-700/80'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <span className="text-xs font-bold text-orange-400 flex items-center gap-1.5">
+                  <span>🌇</span>
+                  <span>Afternoon Ration</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-700 text-slate-300 font-mono">
+                    4:00 PM
+                  </span>
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-xl font-extrabold text-white font-mono">
+                  {afternoonRationKg} <span className="text-xs text-slate-400 font-normal">kg</span>
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAfternoonFed(!afternoonFed);
+                toast.success(
+                  afternoonFed
+                    ? 'Afternoon feed unmarked'
+                    : 'Afternoon ration marked as completed!'
+                );
+              }}
+              className={`w-full py-3 px-3 rounded-2xl text-xs font-extrabold min-h-[46px] flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                afternoonFed
+                  ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                  : 'bg-slate-700/90 hover:bg-slate-600 active:bg-slate-800 text-white shadow-xs'
+              }`}
+            >
+              {afternoonFed ? (
+                <>
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>Afternoon Completed</span>
+                </>
+              ) : (
+                <span>Mark Afternoon Fed (4:00 PM)</span>
+              )}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* TOP SECTION: 4 Stat Cards with Clean Aligned Figures */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <StatCard
+          title="Active Herd"
+          value={activePigs.length}
+          change="+8.5"
+          changeLabel="growth"
+          icon={Warehouse}
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+        />
+        <StatCard
+          title="Market Ready"
+          value={marketReadyPigs.length}
+          change={formatCurrency(marketReadyValue)}
+          changeLabel="value"
+          icon={TrendingUp}
+          iconBg="bg-blue-50"
+          iconColor="text-blue-600"
+        />
+        <StatCard
+          title="Farm Revenue"
+          value={formatCurrency(totalRevenue)}
+          change="+12.4"
+          changeLabel="YTD"
+          icon={DollarSign}
+          iconBg="bg-amber-50"
+          iconColor="text-amber-600"
+        />
+        <StatCard
+          title="Active Tasks"
+          value={activeTasksCount}
+          change={urgentTasks.length > 0 ? `${urgentTasks.length} urgent` : 'All clear'}
+          changeLabel=""
+          icon={ClipboardList}
+          iconBg="bg-purple-50"
+          iconColor="text-purple-600"
+        />
+      </section>
+
+      {/* MOBILE CHARTS TOGGLE BUTTON (Reduces mobile clutter) */}
+      <div className="lg:hidden flex items-center justify-between p-3.5 bg-white rounded-2xl border border-gray-200/80 shadow-xs">
+        <div className="flex items-center gap-2">
+          <BarChart3 className="w-4 h-4 text-brand-600" />
+          <span className="text-xs font-bold text-gray-800">
+            {showMobileCharts ? 'Growth & Status Charts' : 'Herd Population Charts'}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowMobileCharts(!showMobileCharts)}
+          className="text-xs font-bold text-brand-600 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-50"
+        >
+          <span>{showMobileCharts ? 'Hide Charts' : 'Show Charts'}</span>
+          {showMobileCharts ? (
+            <ChevronUp className="w-3.5 h-3.5" />
+          ) : (
+            <ChevronDown className="w-3.5 h-3.5" />
+          )}
+        </button>
+      </div>
+
+      {/* MIDDLE SECTION: 2 Charts Side by Side (Always visible on desktop, toggleable on mobile) */}
+      <section className={`${showMobileCharts ? 'grid' : 'hidden lg:grid'} grid-cols-1 lg:grid-cols-2 gap-5`}>
+        {/* Chart 1: Herd Growth Overview */}
+        <div className="card flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900 tracking-tight">
+                Herd Growth Overview
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Swine population trajectory over past 6 months
+              </p>
+            </div>
+            <Link
+              to="/pigs"
+              className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1 group"
+            >
+              <span>View Herd</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="h-60 sm:h-64 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={herdGrowthData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="herdGrowthGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.35} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#64748b', fontSize: 12 }}
+                  allowDecimals={false}
+                />
+                <Tooltip content={<AreaChartTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#059669"
+                  strokeWidth={2.5}
+                  fillOpacity={1}
+                  fill="url(#herdGrowthGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart 2: Pig Status Distribution */}
+        <div className="card flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-gray-900 tracking-tight">
+                Pig Status Distribution
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Active herd lifecycle breakdown
+              </p>
+            </div>
+            <Link
+              to="/pigs"
+              className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1 group"
+            >
+              <span>Manage</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+
+          {statusDistribution.length === 0 ? (
+            <div className="h-60 sm:h-64 flex items-center justify-center">
+              <EmptyState
+                title="No Active Pigs"
+                description="Add pigs to view status breakdown"
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 h-60 sm:h-64">
+              <div className="relative w-44 h-44 flex-shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Tooltip content={<PieChartTooltip />} />
+                    <Pie
+                      data={statusDistribution}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {statusDistribution.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Center metric */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-xl font-bold text-gray-900 leading-none">
+                    {activePigs.length}
+                  </span>
+                  <span className="text-[10px] font-medium text-gray-500 mt-0.5">
+                    Active Herd
+                  </span>
+                </div>
+              </div>
+
+              {/* Status Breakdown List */}
+              <div className="flex-1 w-full space-y-2">
+                {statusDistribution.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between text-xs p-2 rounded-xl bg-gray-50/80 hover:bg-gray-100/80 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="font-semibold text-gray-700">{item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 font-bold text-gray-900">
+                      <span>{item.value} pigs</span>
+                      <span className="text-gray-400 font-normal">
+                        ({item.percentage}%)
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* BOTTOM SECTION: 3 Columns (Weight Leaderboard, Upcoming Tasks, Recent Finances) */}
+      <section className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Column 1: Weight Progress Leaderboard with 1-Tap Quick Weigh */}
+        <div className="card flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <Scale className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Market Weight Leaders</h3>
+                  <p className="text-[11px] text-gray-400">Target: {MARKET_STANDARDS.targetLiveWeight.ideal} kg</p>
+                </div>
+              </div>
+              <Link
+                to="/pigs"
+                className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1 group"
+              >
+                <span>All Pigs</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
+
+            {topProgressPigs.length === 0 ? (
+              <p className="text-xs text-gray-400 py-6 text-center">
+                No active pigs currently logged.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {topProgressPigs.map((pig) => {
+                  const progress = getProgressToMarket(
+                    pig.currentWeight,
+                    pig.targetWeight
+                  );
+                  return (
+                    <div
+                      key={pig.id}
+                      className="p-3 rounded-2xl bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100 transition-all flex items-center justify-between gap-3"
+                    >
+                      <div
+                        onClick={() => navigate(`/pigs/${pig.id}`)}
+                        className="flex-1 cursor-pointer min-w-0"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-mono text-[10px] bg-slate-900 text-white font-bold px-1.5 py-0.5 rounded">
+                              {pig.tagNumber}
+                            </span>
+                            <span className="font-bold text-gray-900 text-xs truncate">
+                              {pig.name}
+                            </span>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <span className="font-extrabold text-gray-900 text-xs font-mono">
+                              {formatWeight(pig.currentWeight)}
+                            </span>
+                            <span className="text-[10px] text-emerald-700 font-bold ml-1.5">
+                              {progress}%
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Progress bar */}
+                        <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                          <div
+                            className="bg-brand-500 h-1.5 rounded-full"
+                            style={{ width: `${Math.min(100, progress)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* 1-Tap Quick Weigh Button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          triggerQuickWeigh(pig.id);
+                        }}
+                        className="p-2 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-xs font-bold transition-all shadow-xs flex-shrink-0 flex items-center gap-1 active:scale-95"
+                        title="Quick Weigh"
+                      >
+                        <Scale className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline text-[11px]">Weigh</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Column 2: Upcoming Tasks */}
+        <div className="card flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                  <ClipboardList className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Upcoming Schedule</h3>
+                  <p className="text-[11px] text-gray-400">Vaccines &amp; scale checks</p>
+                </div>
+              </div>
+              <Link
+                to="/tasks"
+                className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1 group"
+              >
+                <span>View All</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
+
+            {upcomingTasks.length === 0 ? (
+              <p className="text-xs text-gray-400 py-6 text-center">
+                All scheduled tasks completed!
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {upcomingTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="p-2.5 rounded-xl bg-gray-50/70 border border-gray-100 flex items-center justify-between gap-2.5"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          completeTask(task.id, true);
+                          toast.success(`Completed: ${task.title}`);
+                        }}
+                        className="w-5 h-5 rounded-full border-2 border-gray-300 hover:border-emerald-500 hover:bg-emerald-50 flex items-center justify-center flex-shrink-0 transition-colors"
+                        title="Mark Complete"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-gray-900 truncate">
+                          {task.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
+                          <span className="font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">
+                            {task.category}
+                          </span>
+                          <span>&bull;</span>
+                          <span className="text-gray-400">{formatDate(task.dueDate)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <StatusBadge type="task-priority" value={task.priority} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Column 3: Recent Transactions in PHP */}
+        <div className="card flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3.5 mb-3.5 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Recent Transactions</h3>
+                  <p className="text-[11px] text-gray-400">Cash Flow (₱)</p>
+                </div>
+              </div>
+              <Link
+                to="/finance"
+                className="text-xs font-semibold text-brand-600 hover:text-brand-700 inline-flex items-center gap-1 group"
+              >
+                <span>Finance</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+            </div>
+
+            {finances.length === 0 ? (
+              <p className="text-xs text-gray-400 py-6 text-center">
+                No financial transactions recorded.
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {finances.slice(0, 5).map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-2.5 rounded-xl bg-gray-50/70 border border-gray-100 flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-gray-900 truncate">
+                        {item.description || item.category}
+                      </p>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {formatDate(item.date)} &bull; {item.category}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs font-mono font-extrabold tabular-nums flex-shrink-0 text-right ${
+                        item.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                      }`}
+                    >
+                      {item.type === 'income' ? '+' : '-'} {formatCurrency(item.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </section>
     </div>
   );

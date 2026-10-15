@@ -10,15 +10,13 @@ import { generateId, getPigStatusFromWeight, generateAutoTasks } from '../utils/
 import { TASK_STATUS, PIG_STATUS } from '../utils/constants';
 import { debouncedBackup } from '../lib/supabaseSync';
 
-const STORAGE_KEY = 'porkpro_app_state_v3_ph';
+const STORAGE_KEY = 'porkpro_app_state_v2_ph';
 
 const defaultSettings = {
   farmName: 'PorkPro Farm',
   currency: 'PHP',
   targetMarketWeight: 90,
   defaultBreed: 'Landrace x Large White',
-  region: 'Cebu',
-  liveweightPriceKg: 180,
 };
 
 const defaultInitialState = {
@@ -739,26 +737,3 @@ export function useNotifications() {
     [state.notifications, unreadCount, addNotification, dismissNotification, clearNotifications, markNotificationRead]
   );
 }
-
-export function useSettings() {
-  const { state, dispatch } = useApp();
-
-  const updateSettings = useCallback(
-    (newSettings) => dispatch({ type: 'UPDATE_SETTINGS', payload: newSettings }),
-    [dispatch]
-  );
-
-  return useMemo(
-    () => ({
-      settings: state.settings,
-      updateSettings,
-    }),
-    [state.settings, updateSettings]
-  );
-}
-
-export function useAppDispatch() {
-  const { dispatch } = useApp();
-  return dispatch;
-}
-
