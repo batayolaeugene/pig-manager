@@ -581,21 +581,21 @@ export function PigInventory() {
                   </div>
                 </div>
 
-                {/* Bottom Action Buttons */}
-                <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-2">
+                {/* Bottom Action Buttons (44px touch targets, Glove-Friendly) */}
+                <div className="pt-2.5 border-t border-gray-100 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => triggerQuickWeigh(pig.id)}
-                    className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
+                    className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all min-h-[44px]"
                   >
-                    <Scale className="w-4 h-4" />
+                    <Scale className="w-4 h-4 stroke-[2.2]" />
                     <span>Log Weight</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => navigate(`/pigs/${pig.id}`)}
-                    className="py-2 px-3 bg-white border border-gray-200 hover:bg-gray-50 active:scale-95 text-gray-700 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all"
+                    className="py-2.5 px-3 bg-white border border-gray-200 hover:bg-gray-50 active:scale-95 text-gray-800 font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all min-h-[44px]"
                   >
                     <span>Profile &rarr;</span>
                   </button>

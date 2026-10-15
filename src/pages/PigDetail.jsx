@@ -267,7 +267,7 @@ export function PigDetail() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-fadeIn pb-16">
+    <div className="max-w-7xl mx-auto space-y-6 animate-fadeIn pb-32 lg:pb-16">
       {/* HEADER SECTION */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-100 pb-5">
         <div className="flex items-center gap-3">
@@ -1352,6 +1352,34 @@ export function PigDetail() {
           </div>
         </form>
       </Modal>
+
+      {/* MOBILE STICKY BOTTOM ACTION BAR (Thumb Zone - EveryPig / Porcitec ergonomics) */}
+      <div className="lg:hidden fixed bottom-16 left-0 right-0 p-3 bg-white/95 backdrop-blur-md border-t border-gray-200/90 z-30 flex items-center gap-2.5 shadow-2xl">
+        <button
+          type="button"
+          onClick={() => setIsWeightModalOpen(true)}
+          className="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-extrabold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-600/30 transition-all min-h-[48px]"
+        >
+          <Scale className="w-4 h-4 stroke-[2.5]" />
+          <span>Quick Weigh</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsHealthModalOpen(true)}
+          className="py-3 px-4 bg-rose-50 border border-rose-200/80 hover:bg-rose-100 active:scale-95 text-rose-700 font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 transition-all min-h-[48px]"
+        >
+          <HeartPulse className="w-4 h-4 text-rose-500" />
+          <span>Health</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsEditOpen(true)}
+          className="p-3 bg-gray-100 hover:bg-gray-200 border border-gray-200 active:scale-95 text-gray-700 rounded-2xl text-xs transition-all min-h-[48px] min-w-[48px] flex items-center justify-center"
+          title="Edit Details"
+        >
+          <Edit3 className="w-4 h-4" />
+        </button>
+      </div>
 
       {/* CONFIRM DELETE DIALOG */}
       <ConfirmDialog

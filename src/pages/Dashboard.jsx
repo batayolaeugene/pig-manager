@@ -438,10 +438,10 @@ export function Dashboard() {
                   morningFed ? 'Morning feed unmarked' : 'Morning ration marked as completed!'
                 );
               }}
-              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+              className={`w-full py-3 px-3 rounded-2xl text-xs font-extrabold min-h-[46px] flex items-center justify-center gap-2 transition-all active:scale-95 ${
                 morningFed
-                  ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
-                  : 'bg-slate-700 hover:bg-slate-600 text-white'
+                  ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                  : 'bg-slate-700/90 hover:bg-slate-600 active:bg-slate-800 text-white shadow-xs'
               }`}
             >
               {morningFed ? (
@@ -450,7 +450,7 @@ export function Dashboard() {
                   <span>Morning Completed</span>
                 </>
               ) : (
-                <span>Mark Morning Fed</span>
+                <span>Mark Morning Fed (6:00 AM)</span>
               )}
             </button>
           </div>
@@ -490,10 +490,10 @@ export function Dashboard() {
                     : 'Afternoon ration marked as completed!'
                 );
               }}
-              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+              className={`w-full py-3 px-3 rounded-2xl text-xs font-extrabold min-h-[46px] flex items-center justify-center gap-2 transition-all active:scale-95 ${
                 afternoonFed
-                  ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
-                  : 'bg-slate-700 hover:bg-slate-600 text-white'
+                  ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                  : 'bg-slate-700/90 hover:bg-slate-600 active:bg-slate-800 text-white shadow-xs'
               }`}
             >
               {afternoonFed ? (
@@ -502,7 +502,7 @@ export function Dashboard() {
                   <span>Afternoon Completed</span>
                 </>
               ) : (
-                <span>Mark Afternoon Fed</span>
+                <span>Mark Afternoon Fed (4:00 PM)</span>
               )}
             </button>
           </div>

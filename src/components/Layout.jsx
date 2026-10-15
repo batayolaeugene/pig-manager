@@ -62,9 +62,9 @@ export function Layout() {
           <Outlet />
         </main>
 
-        {/* Mobile Bottom Navigation Bar (Field Optimized & Glove Friendly) */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200/80 z-40 safe-area-bottom shadow-lg">
-          <div className="flex items-center justify-around h-16 px-2 max-w-lg mx-auto">
+        {/* Mobile Bottom Navigation Bar (Field Ergonomics & Thumb Zone) */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200/90 z-40 pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-xl">
+          <div className="flex items-center justify-around h-16 px-1 max-w-lg mx-auto">
             {MOBILE_TABS.map((tab) => {
               const active = isTabActive(tab.path);
               const Icon = tab.icon;
@@ -75,13 +75,13 @@ export function Layout() {
                     key={tab.label}
                     type="button"
                     onClick={() => handleTabClick(tab)}
-                    className="flex flex-col items-center justify-center -mt-5 focus:outline-none group active:scale-95 transition-transform"
+                    className="flex flex-col items-center justify-center -mt-6 focus:outline-none group active:scale-90 transition-transform"
                     aria-label="Quick Actions"
                   >
-                    <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-brand-600/35 border-3 border-white text-white">
-                      <Icon className="w-6 h-6 stroke-[2.5]" />
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-600/35 border-4 border-white text-white group-hover:scale-105 transition-transform">
+                      <Icon className="w-7 h-7 stroke-[2.8]" />
                     </div>
-                    <span className="text-[10px] font-bold text-brand-700 mt-1">Actions</span>
+                    <span className="text-[10px] font-extrabold text-emerald-800 mt-0.5">Quick Actions</span>
                   </button>
                 );
               }
@@ -91,15 +91,15 @@ export function Layout() {
                   key={tab.path}
                   type="button"
                   onClick={() => handleTabClick(tab)}
-                  className={`flex flex-col items-center justify-center gap-1 py-1.5 px-3 rounded-xl transition-all ${
-                    active ? 'text-brand-600 font-bold' : 'text-gray-400 hover:text-gray-600'
+                  className={`flex flex-col items-center justify-center min-w-[56px] min-h-[48px] py-1 px-2 rounded-2xl active:scale-95 transition-all ${
+                    active ? 'text-emerald-700 font-extrabold' : 'text-gray-400 hover:text-gray-600'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${active ? 'stroke-[2.5]' : 'stroke-[1.8]'}`} />
-                  <span className={`text-[10px] ${active ? 'font-bold' : 'font-medium'}`}>
+                  <Icon className={`w-5 h-5 ${active ? 'stroke-[2.5] text-emerald-600' : 'stroke-[1.8]'}`} />
+                  <span className={`text-[10px] tracking-tight ${active ? 'font-extrabold text-emerald-800' : 'font-medium'}`}>
                     {tab.label}
                   </span>
-                  {active && <div className="w-1.5 h-1.5 rounded-full bg-brand-600 -mt-0.5" />}
+                  {active && <div className="w-1 h-1 rounded-full bg-emerald-600 -mt-0.5" />}
                 </button>
               );
             })}

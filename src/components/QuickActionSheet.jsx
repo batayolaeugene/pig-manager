@@ -9,6 +9,7 @@ import {
   Receipt,
   X,
   Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 
 export function QuickActionSheet({ isOpen, onClose, onOpenQuickWeigh }) {
@@ -18,8 +19,8 @@ export function QuickActionSheet({ isOpen, onClose, onOpenQuickWeigh }) {
 
   const actions = [
     {
-      title: 'Quick Weigh-In',
-      desc: 'Update scale weight & recalculate DA feed',
+      title: 'Quick Weigh',
+      desc: '1-tap scale log',
       icon: Scale,
       color: 'bg-emerald-500 text-white',
       badge: 'Fast',
@@ -29,8 +30,8 @@ export function QuickActionSheet({ isOpen, onClose, onOpenQuickWeigh }) {
       },
     },
     {
-      title: 'Daily Feeding Guide',
-      desc: 'Morning & afternoon ration schedules',
+      title: 'Daily Feeding',
+      desc: 'DA morning & afternoon',
       icon: Utensils,
       color: 'bg-blue-500 text-white',
       onClick: () => {
@@ -39,8 +40,8 @@ export function QuickActionSheet({ isOpen, onClose, onOpenQuickWeigh }) {
       },
     },
     {
-      title: 'Add Single Pig',
-      desc: 'Auto-generates DA vaccine schedule',
+      title: 'Add Pig',
+      desc: 'Single or batch intake',
       icon: PlusCircle,
       color: 'bg-indigo-500 text-white',
       onClick: () => {
@@ -49,8 +50,8 @@ export function QuickActionSheet({ isOpen, onClose, onOpenQuickWeigh }) {
       },
     },
     {
-      title: 'Batch Management',
-      desc: 'Group intake, cohort feed & profit',
+      title: 'Batches',
+      desc: 'Pen & cohort groups',
       icon: Layers,
       color: 'bg-purple-500 text-white',
       onClick: () => {
@@ -59,8 +60,8 @@ export function QuickActionSheet({ isOpen, onClose, onOpenQuickWeigh }) {
       },
     },
     {
-      title: 'Vaccine & Health Tasks',
-      desc: 'Hog cholera, deworming & checks',
+      title: 'Tasks & Health',
+      desc: 'Vaccines & deworming',
       icon: ClipboardCheck,
       color: 'bg-amber-500 text-white',
       onClick: () => {
@@ -69,8 +70,8 @@ export function QuickActionSheet({ isOpen, onClose, onOpenQuickWeigh }) {
       },
     },
     {
-      title: 'Log Sale or Feed Expense',
-      desc: 'Track farm cash flow & profit in ₱',
+      title: 'Log Finance',
+      desc: 'Sales & feed costs (₱)',
       icon: Receipt,
       color: 'bg-rose-500 text-white',
       onClick: () => {
@@ -82,24 +83,24 @@ export function QuickActionSheet({ isOpen, onClose, onOpenQuickWeigh }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex flex-col justify-end lg:justify-center lg:items-center p-0 lg:p-4 animate-fadeIn"
+      className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex flex-col justify-end lg:justify-center lg:items-center p-0 lg:p-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="w-full lg:max-w-md bg-white rounded-t-3xl lg:rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-slideIn flex flex-col max-h-[85vh]"
+        className="w-full lg:max-w-md bg-white rounded-t-3xl lg:rounded-3xl shadow-2xl border border-gray-100 overflow-hidden animate-slideIn flex flex-col max-h-[88vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Grab Handle for Mobile */}
         <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 lg:hidden" />
 
         {/* Header */}
-        <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+        <div className="px-5 py-3.5 flex items-center justify-between border-b border-gray-100">
           <div>
-            <h3 className="text-base font-bold text-gray-900 tracking-tight flex items-center gap-1.5">
-              <span>Farm Quick Actions</span>
+            <h3 className="text-base font-extrabold text-gray-900 tracking-tight flex items-center gap-1.5">
+              <span>Quick Field Actions</span>
               <Sparkles className="w-4 h-4 text-emerald-500" />
             </h3>
-            <p className="text-xs text-gray-500">Tap an action for fast field logging</p>
+            <p className="text-[11px] text-gray-400">One-tap swine operations</p>
           </div>
           <button
             type="button"
@@ -110,8 +111,8 @@ export function QuickActionSheet({ isOpen, onClose, onOpenQuickWeigh }) {
           </button>
         </div>
 
-        {/* Action List with Big Glove-Friendly Buttons */}
-        <div className="p-4 overflow-y-auto space-y-2.5">
+        {/* Action Grid: 2-Column Chunky Tactile Tiles (Glove & Thumb Friendly) */}
+        <div className="p-4 overflow-y-auto grid grid-cols-2 gap-2.5">
           {actions.map((act) => {
             const Icon = act.icon;
             return (
@@ -119,35 +120,33 @@ export function QuickActionSheet({ isOpen, onClose, onOpenQuickWeigh }) {
                 key={act.title}
                 type="button"
                 onClick={act.onClick}
-                className="w-full flex items-center gap-3.5 p-3.5 rounded-2xl bg-gray-50/80 hover:bg-emerald-50/60 active:bg-emerald-100/70 border border-gray-200/70 hover:border-emerald-300 transition-all text-left group shadow-xs"
+                className="flex flex-col items-center text-center p-3.5 rounded-2xl bg-gray-50/90 hover:bg-emerald-50/60 active:scale-95 border border-gray-200/80 hover:border-emerald-300 transition-all group shadow-xs relative"
               >
+                {act.badge && (
+                  <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-100 text-emerald-800">
+                    {act.badge}
+                  </span>
+                )}
                 <div
-                  className={`w-11 h-11 rounded-xl ${act.color} flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform`}
+                  className={`w-12 h-12 rounded-2xl ${act.color} flex items-center justify-center mb-2 shadow-sm group-hover:scale-105 transition-transform`}
                 >
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-6 h-6 stroke-[2.2]" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-900 group-hover:text-emerald-800 truncate">
-                      {act.title}
-                    </span>
-                    {act.badge && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800">
-                        {act.badge}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 truncate mt-0.5">{act.desc}</p>
-                </div>
+                <span className="text-xs font-extrabold text-gray-900 group-hover:text-emerald-800 leading-tight">
+                  {act.title}
+                </span>
+                <span className="text-[10px] text-gray-400 mt-1 line-clamp-1">
+                  {act.desc}
+                </span>
               </button>
             );
           })}
         </div>
 
         {/* Footer info */}
-        <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 text-center">
-          <p className="text-[11px] text-gray-400">
-            PorkPro PH &bull; Aligned with DA &amp; BAI Standards
+        <div className="px-5 py-2.5 bg-gray-50 border-t border-gray-100 text-center">
+          <p className="text-[10px] text-gray-400 font-medium">
+            Philippine DA &bull; Bureau of Animal Industry (BAI) Standards
           </p>
         </div>
       </div>

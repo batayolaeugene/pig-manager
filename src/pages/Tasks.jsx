@@ -314,7 +314,7 @@ export function Tasks() {
               )}
             >
               {row.status === TASK_STATUS.COMPLETED && (
-                <Check className="w-3 h-3 stroke-[3]" />
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
               )}
             </button>
             <span
@@ -899,14 +899,14 @@ export function Tasks() {
                             type="button"
                             onClick={() => handleToggleComplete(task.id, task.status)}
                             className={cn(
-                              'w-4 h-4 mt-0.5 rounded border flex-shrink-0 flex items-center justify-center transition-colors',
+                              'w-6 h-6 mt-0.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all active:scale-90',
                               task.status === TASK_STATUS.COMPLETED
                                 ? 'bg-emerald-600 border-emerald-600 text-white'
                                 : 'border-gray-300 hover:border-emerald-500'
                             )}
                           >
                             {task.status === TASK_STATUS.COMPLETED && (
-                              <Check className="w-3 h-3 stroke-[3]" />
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
                             )}
                           </button>
                           <div className="flex-1 min-w-0">
