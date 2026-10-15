@@ -248,11 +248,11 @@ export function Dashboard() {
               Farm Dashboard
             </h1>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-              <Sparkles className="w-3 h-3 text-emerald-500" /> PH Standard
+              <Sparkles className="w-3 h-3 text-emerald-500" /> DA Standards
             </span>
           </div>
           <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Real-time swine herd metrics aligned with Philippine DA &amp; BAI guidelines.
+            Commercial Swine Operations &bull; Real-time Philippine Standard Records
           </p>
         </div>
 
@@ -279,16 +279,16 @@ export function Dashboard() {
 
       {/* URGENT DA VACCINATION & HEALTH ALERT BANNER */}
       {urgentTasks.length > 0 && (
-        <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-300/80 flex items-center justify-between gap-3 animate-slideIn">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
-              <ShieldAlert className="w-5 h-5" />
+        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-300/80 flex items-center justify-between gap-3 animate-slideIn">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-xs">
+              <ShieldAlert className="w-4 h-4" />
             </div>
-            <div>
-              <p className="text-xs sm:text-sm font-bold text-amber-950">
-                {urgentTasks.length} Urgent / Overdue DA Health Task{urgentTasks.length > 1 ? 's' : ''}
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-bold text-amber-950 truncate">
+                {urgentTasks.length} Urgent Health Task{urgentTasks.length > 1 ? 's' : ''}
               </p>
-              <p className="text-[11px] sm:text-xs text-amber-800 line-clamp-1">
+              <p className="text-[11px] text-amber-800 truncate">
                 {urgentTasks[0].title} &bull; Due: {formatDate(urgentTasks[0].dueDate)}
               </p>
             </div>
@@ -297,24 +297,24 @@ export function Dashboard() {
             to="/tasks"
             className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex-shrink-0"
           >
-            Review Tasks
+            View Tasks
           </Link>
         </div>
       )}
 
-      {/* FIELD QUICK ACTION BUTTONS (Glove-Friendly, Large Tap Zones) */}
+      {/* FIELD QUICK ACTION BUTTONS (Clean, Bold, Focused) */}
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
         <button
           type="button"
           onClick={() => triggerQuickWeigh()}
-          className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all shadow-md shadow-emerald-600/20 text-left group"
+          className="flex items-center gap-3 p-3.5 rounded-2xl bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95 transition-all shadow-xs text-left group"
         >
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
             <Scale className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="text-xs sm:text-sm font-bold block leading-tight">Weigh Pig</span>
-            <span className="text-[10px] text-emerald-100 block">Fast 1-tap scale</span>
+            <span className="text-sm font-extrabold block leading-tight">Quick Weigh</span>
+            <span className="text-[11px] text-emerald-100/90 font-medium block">Log scale</span>
           </div>
         </button>
 
@@ -326,10 +326,10 @@ export function Dashboard() {
             <Utensils className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs sm:text-sm font-bold text-gray-900 block leading-tight">
+            <span className="text-sm font-extrabold text-gray-900 block leading-tight">
               Feed Guide
             </span>
-            <span className="text-[10px] text-gray-500 block">DA daily rations</span>
+            <span className="text-[11px] text-gray-500 font-medium block">Daily rations</span>
           </div>
         </Link>
 
@@ -341,10 +341,10 @@ export function Dashboard() {
             <Plus className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs sm:text-sm font-bold text-gray-900 block leading-tight">
+            <span className="text-sm font-extrabold text-gray-900 block leading-tight">
               Add Pig
             </span>
-            <span className="text-[10px] text-gray-500 block">Single or Batch</span>
+            <span className="text-[11px] text-gray-500 font-medium block">Single / Batch</span>
           </div>
         </Link>
 
@@ -356,151 +356,166 @@ export function Dashboard() {
             <ClipboardList className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-xs sm:text-sm font-bold text-gray-900 block leading-tight">
-              Today's Tasks
+            <span className="text-sm font-extrabold text-gray-900 block leading-tight">
+              Tasks
             </span>
-            <span className="text-[10px] text-gray-500 block">Vaccine &amp; health</span>
+            <span className="text-[11px] text-gray-500 font-medium block">Schedule</span>
           </div>
         </Link>
       </section>
 
-      {/* TODAY'S FEEDING TRACKER (Philippine DA Morning & Afternoon Widget) */}
-      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-3xl p-4 sm:p-6 shadow-xl border border-slate-700/60 relative overflow-hidden">
-        <div className="relative z-10">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                <Utensils className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
-                  Today's Feeding Schedule (DA Standard)
-                </h3>
-                <p className="text-[11px] text-slate-400">
-                  Total Active Herd: {activePigs.length} pigs &bull; Total Daily Feed:{' '}
-                  <span className="text-emerald-400 font-bold">{herdFeed.totalDailyKg} kg</span> (
-                  {formatCurrency(herdFeed.totalDailyCost)})
-                </p>
-              </div>
+      {/* TODAY'S FEEDING TRACKER (Focused on Numbers & Clear Tabular Alignment) */}
+      <section className="bg-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg border border-slate-800 relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+              <Utensils className="w-4 h-4" />
             </div>
-
-            <Link
-              to="/feed"
-              className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 inline-flex items-center gap-1 self-start sm:self-auto"
-            >
-              <span>Detailed Ration Calculator</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                Daily Feeding Schedule
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                Philippine DA Standard &bull; {activePigs.length} Active Swine
+              </p>
+            </div>
           </div>
 
-          {/* Morning & Afternoon Ration Action Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Morning Meal (6:00 AM) */}
-            <div
-              className={`p-3.5 rounded-2xl border transition-all ${
-                morningFed
-                  ? 'bg-emerald-950/40 border-emerald-500/50'
-                  : 'bg-slate-800/80 border-slate-700/80'
-              }`}
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            <div className="text-right">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                Total Daily Feed
+              </p>
+              <p className="text-sm sm:text-base font-extrabold text-emerald-400 font-mono">
+                {herdFeed.totalDailyKg} kg{' '}
+                <span className="text-slate-400 text-xs font-normal">
+                  ({formatCurrency(herdFeed.totalDailyCost)})
+                </span>
+              </p>
+            </div>
+            <Link
+              to="/feed"
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 transition-colors"
+              title="View Feed Calculator"
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-amber-400 flex items-center gap-1">
-                    🌅 Morning Ration
-                  </span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+
+        {/* Morning & Afternoon Meal Cards with Clear Numbers */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Morning Meal (6:00 AM) */}
+          <div
+            className={`p-3.5 rounded-2xl border transition-all ${
+              morningFed
+                ? 'bg-emerald-950/40 border-emerald-500/50'
+                : 'bg-slate-800/80 border-slate-700/80'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                  <span>🌅</span>
+                  <span>Morning Ration</span>
                   <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-700 text-slate-300 font-mono">
                     6:00 AM
                   </span>
-                </div>
-                <span className="text-xs font-bold text-white">{morningRationKg} kg total</span>
+                </span>
               </div>
-              <p className="text-[11px] text-slate-400 mb-3">
-                Creep/Starter crumble &bull; 50% daily allowance
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setMorningFed(!morningFed);
-                  toast.success(
-                    morningFed ? 'Morning feed unmarked' : 'Morning ration marked as completed!'
-                  );
-                }}
-                className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                  morningFed
-                    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
-                    : 'bg-slate-700 hover:bg-slate-600 text-white'
-                }`}
-              >
-                {morningFed ? (
-                  <>
-                    <Check className="w-4 h-4 stroke-[3]" />
-                    <span>Morning Fed (Done)</span>
-                  </>
-                ) : (
-                  <span>Mark Morning Fed</span>
-                )}
-              </button>
+              <div className="text-right">
+                <span className="text-xl font-extrabold text-white font-mono">
+                  {morningRationKg} <span className="text-xs text-slate-400 font-normal">kg</span>
+                </span>
+              </div>
             </div>
 
-            {/* Afternoon Meal (4:00 PM) */}
-            <div
-              className={`p-3.5 rounded-2xl border transition-all ${
-                afternoonFed
-                  ? 'bg-emerald-950/40 border-emerald-500/50'
-                  : 'bg-slate-800/80 border-slate-700/80'
+            <button
+              type="button"
+              onClick={() => {
+                setMorningFed(!morningFed);
+                toast.success(
+                  morningFed ? 'Morning feed unmarked' : 'Morning ration marked as completed!'
+                );
+              }}
+              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                morningFed
+                  ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
+                  : 'bg-slate-700 hover:bg-slate-600 text-white'
               }`}
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-orange-400 flex items-center gap-1">
-                    🌇 Afternoon Ration
-                  </span>
+              {morningFed ? (
+                <>
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>Morning Completed</span>
+                </>
+              ) : (
+                <span>Mark Morning Fed</span>
+              )}
+            </button>
+          </div>
+
+          {/* Afternoon Meal (4:00 PM) */}
+          <div
+            className={`p-3.5 rounded-2xl border transition-all ${
+              afternoonFed
+                ? 'bg-emerald-950/40 border-emerald-500/50'
+                : 'bg-slate-800/80 border-slate-700/80'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <span className="text-xs font-bold text-orange-400 flex items-center gap-1.5">
+                  <span>🌇</span>
+                  <span>Afternoon Ration</span>
                   <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-700 text-slate-300 font-mono">
                     4:00 PM
                   </span>
-                </div>
-                <span className="text-xs font-bold text-white">{afternoonRationKg} kg total</span>
+                </span>
               </div>
-              <p className="text-[11px] text-slate-400 mb-3">
-                Grower/Finisher pellets &bull; Fresh water check (2-3L/kg)
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setAfternoonFed(!afternoonFed);
-                  toast.success(
-                    afternoonFed
-                      ? 'Afternoon feed unmarked'
-                      : 'Afternoon ration marked as completed!'
-                  );
-                }}
-                className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                  afternoonFed
-                    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
-                    : 'bg-slate-700 hover:bg-slate-600 text-white'
-                }`}
-              >
-                {afternoonFed ? (
-                  <>
-                    <Check className="w-4 h-4 stroke-[3]" />
-                    <span>Afternoon Fed (Done)</span>
-                  </>
-                ) : (
-                  <span>Mark Afternoon Fed</span>
-                )}
-              </button>
+              <div className="text-right">
+                <span className="text-xl font-extrabold text-white font-mono">
+                  {afternoonRationKg} <span className="text-xs text-slate-400 font-normal">kg</span>
+                </span>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setAfternoonFed(!afternoonFed);
+                toast.success(
+                  afternoonFed
+                    ? 'Afternoon feed unmarked'
+                    : 'Afternoon ration marked as completed!'
+                );
+              }}
+              className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                afternoonFed
+                  ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30'
+                  : 'bg-slate-700 hover:bg-slate-600 text-white'
+              }`}
+            >
+              {afternoonFed ? (
+                <>
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>Afternoon Completed</span>
+                </>
+              ) : (
+                <span>Mark Afternoon Fed</span>
+              )}
+            </button>
           </div>
         </div>
       </section>
 
-      {/* TOP SECTION: 4 Stat Cards (Responsive 2x2 on Mobile, 4-Col Desktop) */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+      {/* TOP SECTION: 4 Stat Cards with Clean Aligned Figures */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
-          title="Active Swine Herd"
+          title="Active Herd"
           value={activePigs.length}
           change="+8.5"
-          changeLabel="vs last mo"
+          changeLabel="growth"
           icon={Warehouse}
           iconBg="bg-emerald-50"
           iconColor="text-emerald-600"
@@ -509,16 +524,16 @@ export function Dashboard() {
           title="Market Ready"
           value={marketReadyPigs.length}
           change={formatCurrency(marketReadyValue)}
-          changeLabel="live market value"
+          changeLabel="value"
           icon={TrendingUp}
           iconBg="bg-blue-50"
           iconColor="text-blue-600"
         />
         <StatCard
-          title="Total Farm Revenue"
+          title="Farm Revenue"
           value={formatCurrency(totalRevenue)}
           change="+12.4"
-          changeLabel="YTD earnings"
+          changeLabel="YTD"
           icon={DollarSign}
           iconBg="bg-amber-50"
           iconColor="text-amber-600"
@@ -526,8 +541,8 @@ export function Dashboard() {
         <StatCard
           title="Active Tasks"
           value={activeTasksCount}
-          change={urgentTasks.length > 0 ? `${urgentTasks.length} urgent` : 'On schedule'}
-          changeLabel={urgentTasks.length > 0 ? 'needs attention' : 'all good'}
+          change={urgentTasks.length > 0 ? `${urgentTasks.length} urgent` : 'All clear'}
+          changeLabel=""
           icon={ClipboardList}
           iconBg="bg-purple-50"
           iconColor="text-purple-600"
@@ -742,19 +757,29 @@ export function Dashboard() {
                   return (
                     <div
                       key={pig.id}
-                      className="p-2.5 rounded-xl bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100 transition-all flex items-center justify-between gap-3"
+                      className="p-3 rounded-2xl bg-gray-50/70 hover:bg-gray-100/70 border border-gray-100 transition-all flex items-center justify-between gap-3"
                     >
                       <div
                         onClick={() => navigate(`/pigs/${pig.id}`)}
                         className="flex-1 cursor-pointer min-w-0"
                       >
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-gray-900 text-xs truncate">
-                            {pig.name}
-                          </span>
-                          <span className="font-mono text-[10px] bg-white px-1.5 py-0.5 rounded border border-gray-200 text-gray-600">
-                            {pig.tagNumber}
-                          </span>
+                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-mono text-[10px] bg-slate-900 text-white font-bold px-1.5 py-0.5 rounded">
+                              {pig.tagNumber}
+                            </span>
+                            <span className="font-bold text-gray-900 text-xs truncate">
+                              {pig.name}
+                            </span>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <span className="font-extrabold text-gray-900 text-xs font-mono">
+                              {formatWeight(pig.currentWeight)}
+                            </span>
+                            <span className="text-[10px] text-emerald-700 font-bold ml-1.5">
+                              {progress}%
+                            </span>
+                          </div>
                         </div>
 
                         {/* Progress bar */}
@@ -763,14 +788,6 @@ export function Dashboard() {
                             className="bg-brand-500 h-1.5 rounded-full"
                             style={{ width: `${Math.min(100, progress)}%` }}
                           />
-                        </div>
-                        <div className="flex items-center justify-between text-[10px] text-gray-400 mt-1">
-                          <span className="font-semibold text-gray-800">
-                            {formatWeight(pig.currentWeight)}
-                          </span>
-                          <span className="font-bold text-brand-700">
-                            {progress}%
-                          </span>
                         </div>
                       </div>
 
@@ -785,7 +802,7 @@ export function Dashboard() {
                         title="Quick Weigh"
                       >
                         <Scale className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Weigh</span>
+                        <span className="hidden sm:inline text-[11px]">Weigh</span>
                       </button>
                     </div>
                   );
@@ -869,7 +886,7 @@ export function Dashboard() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-gray-900">Recent Transactions</h3>
-                  <p className="text-[11px] text-gray-400">Philippine Peso (₱)</p>
+                  <p className="text-[11px] text-gray-400">Cash Flow (₱)</p>
                 </div>
               </div>
               <Link
@@ -890,7 +907,7 @@ export function Dashboard() {
                 {finances.slice(0, 5).map((item) => (
                   <div
                     key={item.id}
-                    className="p-2.5 rounded-xl bg-gray-50/70 border border-gray-100 flex items-center justify-between gap-2"
+                    className="p-2.5 rounded-xl bg-gray-50/70 border border-gray-100 flex items-center justify-between gap-3"
                   >
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-gray-900 truncate">
@@ -901,7 +918,7 @@ export function Dashboard() {
                       </p>
                     </div>
                     <span
-                      className={`text-xs font-extrabold flex-shrink-0 ${
+                      className={`text-xs font-mono font-extrabold tabular-nums flex-shrink-0 text-right ${
                         item.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
                       }`}
                     >

@@ -33,6 +33,7 @@ import {
   cn,
 } from '../utils/helpers';
 import { StatusBadge } from '../components/StatusBadge';
+import { StatCard } from '../components/StatCard';
 import { Modal } from '../components/Modal';
 import { DataTable } from '../components/DataTable';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -549,95 +550,39 @@ export function Tasks() {
       )}
 
       {/* Quick Stats Row (4 Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="gradient-card-purple rounded-2xl p-5 border border-purple-100/80 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-purple-800 uppercase tracking-wider">
-              Total Tasks
-            </p>
-            <h3 className="text-3xl font-extrabold text-gray-900 mt-1">
-              {totalTasksCount}
-            </h3>
-            <p className="text-[11px] text-purple-900/80 mt-1">In active registry</p>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center">
-            <ClipboardList className="w-6 h-6" />
-          </div>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <StatCard
+          title="Total Tasks"
+          value={totalTasksCount}
+          icon={ClipboardList}
+          iconBg="bg-purple-50"
+          iconColor="text-purple-600"
+        />
 
-        <div
-          className={cn(
-            'rounded-2xl p-5 border shadow-xs flex items-center justify-between',
-            overdueTasks.length > 0
-              ? 'bg-red-50 border-red-200'
-              : 'bg-white border-gray-100'
-          )}
-        >
-          <div>
-            <p
-              className={cn(
-                'text-xs font-semibold uppercase tracking-wider',
-                overdueTasks.length > 0 ? 'text-red-700' : 'text-gray-500'
-              )}
-            >
-              Overdue Tasks
-            </p>
-            <h3
-              className={cn(
-                'text-3xl font-extrabold mt-1',
-                overdueTasks.length > 0 ? 'text-red-600' : 'text-gray-900'
-              )}
-            >
-              {overdueTasks.length}
-            </h3>
-            <p
-              className={cn(
-                'text-[11px] mt-1',
-                overdueTasks.length > 0 ? 'text-red-600 font-medium' : 'text-gray-400'
-              )}
-            >
-              {overdueTasks.length > 0 ? 'Immediate action required' : 'All caught up!'}
-            </p>
-          </div>
-          <div
-            className={cn(
-              'w-12 h-12 rounded-xl flex items-center justify-center',
-              overdueTasks.length > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'
-            )}
-          >
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-        </div>
+        <StatCard
+          title="Overdue"
+          value={overdueTasks.length}
+          change={overdueTasks.length > 0 ? `${overdueTasks.length} urgent` : 'All clear'}
+          icon={AlertTriangle}
+          iconBg={overdueTasks.length > 0 ? 'bg-red-50' : 'bg-gray-50'}
+          iconColor={overdueTasks.length > 0 ? 'text-red-600' : 'text-gray-400'}
+        />
 
-        <div className="gradient-card-blue rounded-2xl p-5 border border-blue-100/80 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-blue-800 uppercase tracking-wider">
-              Due Today
-            </p>
-            <h3 className="text-3xl font-extrabold text-blue-900 mt-1">
-              {dueTodayCount}
-            </h3>
-            <p className="text-[11px] text-blue-900/80 mt-1">Scheduled for today</p>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
-            <Calendar className="w-6 h-6" />
-          </div>
-        </div>
+        <StatCard
+          title="Due Today"
+          value={dueTodayCount}
+          icon={Calendar}
+          iconBg="bg-blue-50"
+          iconColor="text-blue-600"
+        />
 
-        <div className="gradient-card-green rounded-2xl p-5 border border-emerald-100/80 shadow-xs flex items-center justify-between">
-          <div>
-            <p className="text-xs font-semibold text-emerald-800 uppercase tracking-wider">
-              Completed
-            </p>
-            <h3 className="text-3xl font-extrabold text-emerald-800 mt-1">
-              {completedThisWeekCount}
-            </h3>
-            <p className="text-[11px] text-emerald-900/80 mt-1">Finished herd tasks</p>
-          </div>
-          <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
-        </div>
+        <StatCard
+          title="Completed"
+          value={completedThisWeekCount}
+          icon={CheckCircle2}
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+        />
       </div>
 
       {/* Quick Category & Priority Filter Pills (Mobile Priority) */}

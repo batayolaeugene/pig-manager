@@ -52,7 +52,7 @@ export function ProfitCalculator() {
 
   // Per Pig State
   const [selectedPigId, setSelectedPigId] = useState(pigs[0]?.id || '');
-  const [customPricePerKg, setCustomPricePerKg] = useState(3.20); // Default market price $/kg
+  const [customPricePerKg, setCustomPricePerKg] = useState(180); // Default market price ₱180/kg liveweight
 
   // Per Batch State
   const [selectedBatchId, setSelectedBatchId] = useState(batches[0]?.id || '');
@@ -66,7 +66,7 @@ export function ProfitCalculator() {
   const pigFinancials = useMemo(() => {
     if (!activePig) return null;
 
-    const purchasePrice = Number(activePig.purchasePrice) || 65;
+    const purchasePrice = Number(activePig.purchasePrice) || 3500;
 
     // Direct expenses
     const directExpenses = finances.filter(
@@ -111,14 +111,14 @@ export function ProfitCalculator() {
       otherDirectCost += batchOther / pigCount;
     }
 
-    // Realistic baseline fallback if no ledger records yet
+    // Realistic baseline fallback if no ledger records yet (Philippine Peso standards)
     if (feedCost === 0) {
-      // Estimated feed intake ~2.8 FCR on gained weight * $0.95/kg
+      // Estimated feed intake ~2.8 FCR on gained weight * ₱38.00/kg
       const gainedKg = Math.max(10, (activePig.currentWeight || 30) - 8);
-      feedCost = gainedKg * 2.8 * 0.95;
+      feedCost = gainedKg * 2.8 * 38.00;
     }
     if (medicalCost === 0) {
-      medicalCost = 15.0; // Basic preventative vaccinations
+      medicalCost = 450.0; // Basic preventative vaccinations
     }
 
     const totalCosts = purchasePrice + feedCost + medicalCost + otherDirectCost;
@@ -205,9 +205,9 @@ export function ProfitCalculator() {
       other += bExp.filter((f) => f.category !== 'Feed' && f.category !== 'Medication' && f.category !== 'Veterinary').reduce((s, f) => s + f.amount, 0) / count;
 
       if (feed === 0) {
-        feed = Math.max(10, (pig.currentWeight || 30) - 8) * 2.8 * 0.95;
+        feed = Math.max(10, (pig.currentWeight || 30) - 8) * 2.8 * 38.00;
       }
-      if (med === 0) med = 15;
+      if (med === 0) med = 450;
 
       const totalCost = purchasePrice + feed + med + other;
       const actualIncome = finances.filter((f) => f.type === 'income' && f.pigId === pig.id).reduce((s, f) => s + f.amount, 0);
@@ -281,7 +281,7 @@ export function ProfitCalculator() {
     const totalExpensesAll = getTotalExpenses();
 
     // Sum pig purchases that might be in pigs list but not recorded in finances ledger
-    const totalPigPurchaseCost = pigs.reduce((sum, p) => sum + (Number(p.purchasePrice) || 65), 0);
+    const totalPigPurchaseCost = pigs.reduce((sum, p) => sum + (Number(p.purchasePrice) || 3500), 0);
     const ledgerPurchaseCost = finances
       .filter((f) => f.category === 'Pig Purchase')
       .reduce((sum, f) => sum + f.amount, 0);
@@ -308,11 +308,11 @@ export function ProfitCalculator() {
         const isSold = pig.status === PIG_STATUS.SOLD && actualIncome > 0;
         const rev = isSold ? actualIncome : (pig.targetWeight || 110) * customPricePerKg;
 
-        const purchase = Number(pig.purchasePrice) || 65;
+        const purchase = Number(pig.purchasePrice) || 3500;
         const direct = finances.filter((f) => f.type === 'expense' && f.pigId === pig.id);
         const directExp = direct.reduce((s, f) => s + f.amount, 0);
-        const estFeed = directExp > 0 ? 0 : Math.max(10, (pig.currentWeight || 30) - 8) * 2.8 * 0.95;
-        const totalCost = purchase + directExp + estFeed + 15;
+        const estFeed = directExp > 0 ? 0 : Math.max(10, (pig.currentWeight || 30) - 8) * 2.8 * 38.00;
+        const totalCost = purchase + directExp + estFeed + 450;
         const profit = rev - totalCost;
         const roi = totalCost > 0 ? (profit / totalCost) * 100 : 0;
 
@@ -404,14 +404,14 @@ export function ProfitCalculator() {
         {/* Global Market Price Simulator Input */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs">
-            <span className="text-gray-500 font-medium">Est. Market Price:</span>
+            <span className="text-gray-500 font-medium">Live Market Price:</span>
             <div className="flex items-center">
-              <span className="font-bold text-gray-700 mr-1">$</span>
+              <span className="font-bold text-gray-700 mr-1">₱</span>
               <input
                 type="number"
-                step="0.05"
-                min="1.0"
-                max="10.0"
+                step="5"
+                min="50"
+                max="500"
                 className="w-16 px-1.5 py-0.5 text-xs font-bold bg-white border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-500 text-gray-900"
                 value={customPricePerKg}
                 onChange={(e) => setCustomPricePerKg(Number(e.target.value))}

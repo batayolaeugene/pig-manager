@@ -436,29 +436,29 @@ export function PigInventory() {
       </div>
 
       {/* QUICK STAT CHIPS */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-xs">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase">Filtered Count</p>
-          <p className="text-xl font-extrabold text-gray-900 mt-0.5">{stats.totalPigs}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3.5 shadow-xs">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Filtered Count</p>
+          <p className="text-2xl font-extrabold text-gray-900 font-mono mt-0.5">{stats.totalPigs}</p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-xs">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase">Average Weight</p>
-          <p className="text-xl font-extrabold text-emerald-600 mt-0.5">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3.5 shadow-xs">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Average Weight</p>
+          <p className="text-2xl font-extrabold text-emerald-600 font-mono mt-0.5">
             {formatWeight(stats.avgWeight)}
           </p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-xs">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase">Market Ready</p>
-          <p className="text-xl font-extrabold text-blue-600 mt-0.5">
+        <div className="bg-white rounded-2xl border border-gray-100 p-3.5 shadow-xs">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Market Ready</p>
+          <p className="text-2xl font-extrabold text-blue-600 font-mono mt-0.5">
             {stats.marketReadyCount}
           </p>
         </div>
-        <div className="bg-white rounded-2xl border border-gray-100 p-3 shadow-xs">
-          <p className="text-[11px] font-semibold text-gray-500 uppercase">Under Treatment</p>
+        <div className="bg-white rounded-2xl border border-gray-100 p-3.5 shadow-xs">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Treatment</p>
           <p
             className={cn(
-              'text-xl font-extrabold mt-0.5',
-              stats.sickCount > 0 ? 'text-red-600' : 'text-gray-400'
+              'text-2xl font-extrabold font-mono mt-0.5',
+              stats.sickCount > 0 ? 'text-rose-600' : 'text-gray-400'
             )}
           >
             {stats.sickCount}
@@ -484,7 +484,7 @@ export function PigInventory() {
           emptyMessage="No pigs found."
         />
       ) : (
-        /* FIELD-READY CARD GRID (BUTTON DRIVEN) */
+        /* FIELD-READY CARD GRID (CLEAN, FOCUSED, TABULAR ALIGNMENT) */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
           {filteredPigs.map((pig) => {
             const progress = getProgressToMarket(
@@ -493,27 +493,43 @@ export function PigInventory() {
             );
             const batchName = pig.batchId ? batchMap[pig.batchId] : null;
             const dailyFeed = calculateDailyFeed(pig.currentWeight);
-            const morningRation = Math.round((dailyFeed.dailyKg * 0.5) * 1000); // grams
-            const afternoonRation = Math.round((dailyFeed.dailyKg * 0.5) * 1000); // grams
+            const morningRationKg = ((dailyFeed.dailyKg * 0.5)).toFixed(2);
+            const afternoonRationKg = ((dailyFeed.dailyKg * 0.5)).toFixed(2);
 
             return (
               <div
                 key={pig.id}
-                className="card p-4 sm:p-5 flex flex-col justify-between hover:border-brand-300 transition-all duration-150 shadow-xs rounded-2xl"
+                className="bg-white border border-gray-200/80 hover:border-emerald-400/80 p-4 sm:p-5 flex flex-col justify-between transition-all duration-150 shadow-xs rounded-2xl"
               >
                 <div>
-                  {/* Top Bar: Tag & Interactive Status Badges */}
-                  <div className="flex items-center justify-between mb-2.5">
-                    <span className="font-mono text-xs font-bold px-2 py-1 bg-slate-900 text-white rounded-lg">
-                      {pig.tagNumber}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {/* Health button toggle */}
+                  {/* Top Row: Tag, Name & Status Badges */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div
+                      onClick={() => navigate(`/pigs/${pig.id}`)}
+                      className="cursor-pointer group min-w-0"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold px-2 py-0.5 bg-slate-900 text-white rounded-md flex-shrink-0">
+                          {pig.tagNumber}
+                        </span>
+                        <h3 className="text-base font-extrabold text-gray-900 group-hover:text-brand-600 transition-colors truncate">
+                          {pig.name}
+                        </h3>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1 truncate">
+                        {pig.breed} &bull; <span className="capitalize">{pig.gender}</span>
+                        {batchName && (
+                          <span className="font-medium text-emerald-700 ml-1">({batchName})</span>
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
                       <button
                         type="button"
                         onClick={(e) => cycleHealth(pig, e)}
                         className="active:scale-95 transition-transform"
-                        title="Click to toggle health status"
+                        title="Click to toggle health"
                       >
                         <StatusBadge type="health" value={pig.healthStatus} />
                       </button>
@@ -521,77 +537,56 @@ export function PigInventory() {
                     </div>
                   </div>
 
-                  {/* Pig Name, Breed & Batch */}
-                  <div
-                    onClick={() => navigate(`/pigs/${pig.id}`)}
-                    className="cursor-pointer group mb-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-base font-extrabold text-gray-900 group-hover:text-brand-600 transition-colors">
-                        {pig.name}
-                      </h3>
-                      <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-brand-600 transition-colors" />
+                  {/* 2-Column Key Metrics (Weight & Ration) */}
+                  <div className="grid grid-cols-2 gap-3 py-3 px-3.5 bg-gray-50/80 rounded-xl border border-gray-100/90 mb-3">
+                    {/* Weight Metric */}
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Live Weight
+                      </p>
+                      <p className="text-xl font-extrabold text-gray-900 font-mono tracking-tight mt-0.5">
+                        {formatWeight(pig.currentWeight)}
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5 font-medium">
+                        Target: <span className="text-gray-700">{formatWeight(pig.targetWeight || 90)}</span>
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-0.5">
-                      <span>{pig.breed}</span>
-                      <span>&bull;</span>
-                      <span className="capitalize">{pig.gender}</span>
-                      {batchName && (
-                        <>
-                          <span>&bull;</span>
-                          <span className="font-medium text-emerald-700">{batchName}</span>
-                        </>
-                      )}
+
+                    {/* Daily Ration Metric */}
+                    <div className="border-l border-gray-200/60 pl-3">
+                      <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider truncate">
+                        {dailyFeed.feedType.name}
+                      </p>
+                      <p className="text-xl font-extrabold text-emerald-700 font-mono tracking-tight mt-0.5">
+                        {dailyFeed.dailyKg} <span className="text-xs font-normal">kg/d</span>
+                      </p>
+                      <p className="text-[11px] text-gray-500 mt-0.5 font-medium tabular-nums">
+                        AM: {morningRationKg}k &bull; PM: {afternoonRationKg}k
+                      </p>
                     </div>
                   </div>
 
-                  {/* Weight Progress Bar */}
-                  <div className="bg-gray-50/90 rounded-xl p-3 border border-gray-100 mb-3">
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span className="text-gray-500 font-medium">Live Weight</span>
-                      <span className="font-extrabold text-gray-900">
-                        {formatWeight(pig.currentWeight)}{' '}
-                        <span className="text-gray-400 font-normal">
-                          / {formatWeight(pig.targetWeight || 90)}
-                        </span>
-                      </span>
+                  {/* Progress Bar with Right-Aligned Percentage */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between text-[11px] text-gray-400 font-semibold mb-1">
+                      <span>Market Readiness</span>
+                      <span className="font-bold text-emerald-700 font-mono">{progress}%</span>
                     </div>
-
-                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
                       <div
-                        className="bg-brand-500 h-2 rounded-full transition-all duration-300"
+                        className="bg-brand-500 h-1.5 rounded-full transition-all duration-300"
                         style={{ width: `${Math.min(100, progress)}%` }}
                       />
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-gray-500 mt-1.5">
-                      <span className="font-semibold text-emerald-700">
-                        {dailyFeed.feedType.name}
-                      </span>
-                      <span className="font-bold text-gray-700">{progress}% to target</span>
-                    </div>
-                  </div>
-
-                  {/* Philippine DA Daily Feeding Ration Strip */}
-                  <div className="flex items-center justify-between text-[11px] px-3 py-2 bg-emerald-50/70 border border-emerald-200/60 rounded-xl text-emerald-950 mb-3">
-                    <div className="flex items-center gap-1 font-semibold">
-                      <Utensils className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Rations:</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span>🌅 {morningRation}g</span>
-                      <span className="text-emerald-300">|</span>
-                      <span>🌇 {afternoonRation}g</span>
                     </div>
                   </div>
                 </div>
 
-                {/* BOTTOM ACTION BUTTONS (Glove Friendly, 1-Tap) */}
+                {/* Bottom Action Buttons */}
                 <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => triggerQuickWeigh(pig.id)}
-                    className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
+                    className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all"
                   >
                     <Scale className="w-4 h-4" />
                     <span>Log Weight</span>
@@ -600,9 +595,9 @@ export function PigInventory() {
                   <button
                     type="button"
                     onClick={() => navigate(`/pigs/${pig.id}`)}
-                    className="py-2.5 px-3 bg-white border border-gray-200 hover:bg-gray-50 active:scale-95 text-gray-700 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all"
+                    className="py-2 px-3 bg-white border border-gray-200 hover:bg-gray-50 active:scale-95 text-gray-700 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all"
                   >
-                    <span>Full Profile</span>
+                    <span>Profile &rarr;</span>
                   </button>
                 </div>
               </div>

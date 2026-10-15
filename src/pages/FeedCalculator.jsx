@@ -664,18 +664,17 @@ export function FeedCalculator() {
 
                   <h4 className="text-sm font-bold text-gray-900 mb-3">{ration.label}</h4>
 
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-baseline justify-between bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-3xs">
-                      <span className="text-gray-500 font-medium">Amount (kg):</span>
-                      <span className="font-extrabold text-gray-900 text-sm">{ration.amountKg} kg</span>
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex items-baseline justify-between bg-white px-3 py-2 rounded-xl border border-gray-100 shadow-xs">
+                      <span className="text-gray-400 font-medium text-[11px] uppercase tracking-wider">Feed Amount</span>
+                      <div className="text-right">
+                        <span className="font-extrabold text-gray-900 text-base font-mono">{ration.amountKg} kg</span>
+                        <span className="text-gray-400 text-[11px] ml-1 font-normal">({formatNumber(ration.amountGrams)}g)</span>
+                      </div>
                     </div>
-                    <div className="flex items-baseline justify-between bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-3xs">
-                      <span className="text-gray-500 font-medium">Amount (grams):</span>
-                      <span className="font-semibold text-emerald-700">{formatNumber(ration.amountGrams)} g</span>
-                    </div>
-                    <div className="flex items-baseline justify-between bg-white px-2.5 py-1.5 rounded-lg border border-gray-100 shadow-3xs">
-                      <span className="text-gray-500 font-medium">Estimated Cost:</span>
-                      <span className="font-bold text-emerald-800">{formatCurrency(ration.cost)}</span>
+                    <div className="flex items-baseline justify-between bg-white px-3 py-2 rounded-xl border border-gray-100 shadow-xs">
+                      <span className="text-gray-400 font-medium text-[11px] uppercase tracking-wider">Estimated Cost</span>
+                      <span className="font-bold text-emerald-800 text-xs font-mono">{formatCurrency(ration.cost)}</span>
                     </div>
                   </div>
                 </div>

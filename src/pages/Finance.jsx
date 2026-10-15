@@ -528,22 +528,22 @@ export function Finance() {
       {/* Visual Charts Section (Cash Flow & Expense Breakdown) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Monthly Cash Flow Chart */}
-        <div className="card bg-white border border-gray-200/80 p-6 rounded-2xl">
+        <div className="card bg-white border border-gray-200/80 p-5 sm:p-6 rounded-2xl shadow-xs">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-emerald-600" />
-                Monthly Cash Flow (Past 6 Months)
+                Monthly Cash Flow (₱)
               </h3>
-              <p className="text-xs text-gray-500">
-                Income inflows vs expense outflows comparison
+              <p className="text-xs text-gray-400">
+                Income inflows vs expense outflows
               </p>
             </div>
-            <div className="flex items-center gap-3 text-xs font-medium">
+            <div className="flex items-center gap-3 text-xs font-semibold">
               <span className="flex items-center gap-1.5 text-emerald-700">
                 <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Income
               </span>
-              <span className="flex items-center gap-1.5 text-red-700">
+              <span className="flex items-center gap-1.5 text-red-600">
                 <span className="w-2.5 h-2.5 rounded-sm bg-red-500" /> Expense
               </span>
             </div>
@@ -564,7 +564,7 @@ export function Finance() {
                 <YAxis
                   tick={{ fontSize: 11, fill: '#64748b' }}
                   stroke="#cbd5e1"
-                  tickFormatter={(v) => `$${v}`}
+                  tickFormatter={(v) => `₱${Number(v) >= 1000 ? `${Math.round(v/1000)}k` : v}`}
                 />
                 <Tooltip
                   formatter={(val, name) => [
